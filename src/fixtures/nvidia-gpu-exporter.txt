@@ -1,0 +1,13 @@
+# HELP nvidia_smi_gpu_info A metric with a constant '1' value labeled by gpu uuid, name, driver_model_current, driver_model_pending, vbios_version, driver_version.
+# TYPE nvidia_smi_gpu_info gauge
+nvidia_smi_gpu_info{driver_model_current="",driver_model_pending="",driver_version="550.120",name="NVIDIA GeForce RTX 4090",uuid="GPU-5f1c3b8e-2a47-9d61-0e3f-7b4c9a2d18e5",vbios_version="95.02.18.80.5F"} 1
+# HELP nvidia_smi_index index
+# TYPE nvidia_smi_index gauge
+nvidia_smi_index{uuid="GPU-5f1c3b8e-2a47-9d61-0e3f-7b4c9a2d18e5"} 0
+nvidia_smi_temperature_gpu{uuid="GPU-5f1c3b8e-2a47-9d61-0e3f-7b4c9a2d18e5"} 71
+nvidia_smi_utilization_gpu_ratio{uuid="GPU-5f1c3b8e-2a47-9d61-0e3f-7b4c9a2d18e5"} 0.98
+nvidia_smi_memory_used_bytes{uuid="GPU-5f1c3b8e-2a47-9d61-0e3f-7b4c9a2d18e5"} 2.3924310016e+10
+nvidia_smi_memory_total_bytes{uuid="GPU-5f1c3b8e-2a47-9d61-0e3f-7b4c9a2d18e5"} 2.5757220864e+10
+nvidia_smi_power_draw_watts{uuid="GPU-5f1c3b8e-2a47-9d61-0e3f-7b4c9a2d18e5"} 412.37
+nvidia_smi_power_limit_watts{uuid="GPU-5f1c3b8e-2a47-9d61-0e3f-7b4c9a2d18e5"} 450
+nvidia_smi_fan_speed_ratio{uuid="GPU-5f1c3b8e-2a47-9d61-0e3f-7b4c9a2d18e5"} 0.64

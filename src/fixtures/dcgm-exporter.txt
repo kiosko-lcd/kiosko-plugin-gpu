@@ -1,0 +1,32 @@
+# HELP DCGM_FI_DEV_SM_CLOCK SM clock frequency (in MHz).
+# TYPE DCGM_FI_DEV_SM_CLOCK gauge
+DCGM_FI_DEV_SM_CLOCK{gpu="0",UUID="GPU-3a9e2c41-7d0b-4f6e-9a51-0c2d8e7f1b36",pci_bus_id="00000000:01:00.0",device="nvidia0",modelName="NVIDIA GeForce RTX 3090",Hostname="gpubox",DCGM_FI_DRIVER_VERSION="550.120"} 1785
+DCGM_FI_DEV_SM_CLOCK{gpu="1",UUID="GPU-c81f5b07-22e4-4a93-b6d8-5e40f19a7c02",pci_bus_id="00000000:21:00.0",device="nvidia1",modelName="NVIDIA RTX A6000",Hostname="gpubox",DCGM_FI_DRIVER_VERSION="550.120"} 1410
+# HELP DCGM_FI_DEV_MEM_CLOCK Memory clock frequency (in MHz).
+# TYPE DCGM_FI_DEV_MEM_CLOCK gauge
+DCGM_FI_DEV_MEM_CLOCK{gpu="0",UUID="GPU-3a9e2c41-7d0b-4f6e-9a51-0c2d8e7f1b36",pci_bus_id="00000000:01:00.0",device="nvidia0",modelName="NVIDIA GeForce RTX 3090",Hostname="gpubox",DCGM_FI_DRIVER_VERSION="550.120"} 9751
+DCGM_FI_DEV_MEM_CLOCK{gpu="1",UUID="GPU-c81f5b07-22e4-4a93-b6d8-5e40f19a7c02",pci_bus_id="00000000:21:00.0",device="nvidia1",modelName="NVIDIA RTX A6000",Hostname="gpubox",DCGM_FI_DRIVER_VERSION="550.120"} 8001
+# HELP DCGM_FI_DEV_MEMORY_TEMP Memory temperature (in C).
+# TYPE DCGM_FI_DEV_MEMORY_TEMP gauge
+DCGM_FI_DEV_MEMORY_TEMP{gpu="0",UUID="GPU-3a9e2c41-7d0b-4f6e-9a51-0c2d8e7f1b36",pci_bus_id="00000000:01:00.0",device="nvidia0",modelName="NVIDIA GeForce RTX 3090",Hostname="gpubox",DCGM_FI_DRIVER_VERSION="550.120"} 0
+DCGM_FI_DEV_MEMORY_TEMP{gpu="1",UUID="GPU-c81f5b07-22e4-4a93-b6d8-5e40f19a7c02",pci_bus_id="00000000:21:00.0",device="nvidia1",modelName="NVIDIA RTX A6000",Hostname="gpubox",DCGM_FI_DRIVER_VERSION="550.120"} 0
+# HELP DCGM_FI_DEV_GPU_TEMP GPU temperature (in C).
+# TYPE DCGM_FI_DEV_GPU_TEMP gauge
+DCGM_FI_DEV_GPU_TEMP{gpu="0",UUID="GPU-3a9e2c41-7d0b-4f6e-9a51-0c2d8e7f1b36",pci_bus_id="00000000:01:00.0",device="nvidia0",modelName="NVIDIA GeForce RTX 3090",Hostname="gpubox",DCGM_FI_DRIVER_VERSION="550.120"} 74
+DCGM_FI_DEV_GPU_TEMP{gpu="1",UUID="GPU-c81f5b07-22e4-4a93-b6d8-5e40f19a7c02",pci_bus_id="00000000:21:00.0",device="nvidia1",modelName="NVIDIA RTX A6000",Hostname="gpubox",DCGM_FI_DRIVER_VERSION="550.120"} 63
+# HELP DCGM_FI_DEV_POWER_USAGE Power draw (in W).
+# TYPE DCGM_FI_DEV_POWER_USAGE gauge
+DCGM_FI_DEV_POWER_USAGE{gpu="0",UUID="GPU-3a9e2c41-7d0b-4f6e-9a51-0c2d8e7f1b36",pci_bus_id="00000000:01:00.0",device="nvidia0",modelName="NVIDIA GeForce RTX 3090",Hostname="gpubox",DCGM_FI_DRIVER_VERSION="550.120"} 338.123000
+DCGM_FI_DEV_POWER_USAGE{gpu="1",UUID="GPU-c81f5b07-22e4-4a93-b6d8-5e40f19a7c02",pci_bus_id="00000000:21:00.0",device="nvidia1",modelName="NVIDIA RTX A6000",Hostname="gpubox",DCGM_FI_DRIVER_VERSION="550.120"} 187.457000
+# HELP DCGM_FI_DEV_GPU_UTIL GPU utilization (in %).
+# TYPE DCGM_FI_DEV_GPU_UTIL gauge
+DCGM_FI_DEV_GPU_UTIL{gpu="0",UUID="GPU-3a9e2c41-7d0b-4f6e-9a51-0c2d8e7f1b36",pci_bus_id="00000000:01:00.0",device="nvidia0",modelName="NVIDIA GeForce RTX 3090",Hostname="gpubox",DCGM_FI_DRIVER_VERSION="550.120"} 96
+DCGM_FI_DEV_GPU_UTIL{gpu="1",UUID="GPU-c81f5b07-22e4-4a93-b6d8-5e40f19a7c02",pci_bus_id="00000000:21:00.0",device="nvidia1",modelName="NVIDIA RTX A6000",Hostname="gpubox",DCGM_FI_DRIVER_VERSION="550.120"} 41
+# HELP DCGM_FI_DEV_FB_FREE Framebuffer memory free (in MiB).
+# TYPE DCGM_FI_DEV_FB_FREE gauge
+DCGM_FI_DEV_FB_FREE{gpu="0",UUID="GPU-3a9e2c41-7d0b-4f6e-9a51-0c2d8e7f1b36",pci_bus_id="00000000:01:00.0",device="nvidia0",modelName="NVIDIA GeForce RTX 3090",Hostname="gpubox",DCGM_FI_DRIVER_VERSION="550.120"} 1324
+DCGM_FI_DEV_FB_FREE{gpu="1",UUID="GPU-c81f5b07-22e4-4a93-b6d8-5e40f19a7c02",pci_bus_id="00000000:21:00.0",device="nvidia1",modelName="NVIDIA RTX A6000",Hostname="gpubox",DCGM_FI_DRIVER_VERSION="550.120"} 4502
+# HELP DCGM_FI_DEV_FB_USED Framebuffer memory used (in MiB).
+# TYPE DCGM_FI_DEV_FB_USED gauge
+DCGM_FI_DEV_FB_USED{gpu="0",UUID="GPU-3a9e2c41-7d0b-4f6e-9a51-0c2d8e7f1b36",pci_bus_id="00000000:01:00.0",device="nvidia0",modelName="NVIDIA GeForce RTX 3090",Hostname="gpubox",DCGM_FI_DRIVER_VERSION="550.120"} 22874
+DCGM_FI_DEV_FB_USED{gpu="1",UUID="GPU-c81f5b07-22e4-4a93-b6d8-5e40f19a7c02",pci_bus_id="00000000:21:00.0",device="nvidia1",modelName="NVIDIA RTX A6000",Hostname="gpubox",DCGM_FI_DRIVER_VERSION="550.120"} 44120
