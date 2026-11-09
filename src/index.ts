@@ -90,12 +90,14 @@ const sourceOptions = t.object({
   }),
   ssh: t.string({
     placeholder: 'user@gpubox',
+    risk: 'exec',
     label: { en: 'Read over ssh', es: 'Leer por ssh' },
     help: { en: 'Runs nvidia-smi / rocm-smi on that host with ssh -o BatchMode=yes: needs key login. Empty = this machine.', es: 'Ejecuta nvidia-smi / rocm-smi en ese host con ssh -o BatchMode=yes: necesita acceso por clave. Vacío = esta máquina.' },
   }),
   url: t.string({
     format: 'url',
     secret: true,
+    risk: 'network',
     placeholder: 'http://gpubox:9400/metrics',
     label: { en: 'Metrics URL', es: 'URL de métricas' },
     help: { en: 'DCGM exporter (port 9400) or nvidia_gpu_exporter (port 9835).', es: 'DCGM exporter (puerto 9400) o nvidia_gpu_exporter (puerto 9835).' },
