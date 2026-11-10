@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import * as kit from '@loksly/lcd-canvas-kit';
-import { THEMES, localize, type RenderContext } from '@kiosko/sdk';
+import { DEFAULT_WORKDAY, THEMES, createBaseContext, localize, type RenderContext } from '@kiosko/sdk';
 import { createCanvas, loadImage } from '@napi-rs/canvas';
-import { anyBusy, anyCritical, DEFAULT_THRESHOLDS as T, gib, gpuTitle, gpuTempLevel, pushHistory, shortName, vramLevel } from './gpu.ts';
-import plugin, { cards, DEMO_GPUS, demoSnapshot, deps, historyWidget, readWithCache, vram } from './index.ts';
+import { anyAlert, anyBusy, DEFAULT_THRESHOLDS as T, filterGpus, gib, gpuTitle, gpuTempLevel, pushHistory, shortName, vramLevel } from './gpu.ts';
+import plugin, { cards, DEMO_GPUS, demoSnapshot, deps, devices, historyWidget, readDevices, vram } from './index.ts';
 import { DEVICES_SOURCE, type GpuSnapshot, type HistoryPoint } from './types.ts';
 
 test('names: GPU index · short model', () => {
@@ -15,28 +15,35 @@ test('names: GPU index · short model', () => {
   assert.equal(shortName('NVIDIA'), 'NVIDIA');
 });
 
-test('levels: the core temperature counts; VRAM by ratio', () => {
+test('levels: the core temperature counts; VRAM in %', () => {
   assert.equal(gpuTempLevel({ index: 0, uuid: 'a', name: 'x', temp: 70 }, T), 'normal');
   assert.equal(gpuTempLevel({ index: 0, uuid: 'a', name: 'x', temp: 70, memTemp: 92 }, T), 'normal', 'GDDR6X at 92 °C is normal life');
   assert.equal(gpuTempLevel({ index: 0, uuid: 'a', name: 'x', hotspot: 93 }, T), 'alert', 'no core sensor: the hotspot counts');
   assert.equal(gpuTempLevel({ index: 0, uuid: 'a', name: 'x', temp: 83 }, T), 'warn');
-  assert.equal(vramLevel(DEMO_GPUS[0]!, T), 'warn');
+  assert.equal(vramLevel(DEMO_GPUS[0]!, T), 'warn', '93 % of 24 GB');
+  assert.equal(vramLevel({ index: 0, uuid: 'a', name: 'x', memUsed: 97, memTotal: 100 }, T), 'alert', 'red from vramAlert on');
+  assert.equal(vramLevel({ index: 0, uuid: 'a', name: 'x', memUsed: 89, memTotal: 100 }, T), 'normal');
   assert.equal(vramLevel({ index: 0, uuid: 'a', name: 'x' }, T), 'normal');
+  assert.equal(gpuTempLevel({ index: 0, uuid: 'a', name: 'x', temp: 90 }, T), 'alert', 'red from tempAlert on');
   assert.equal(gib(22874), '22.3G');
   assert.equal(gib(512), '512M');
 });
 
-test('urgent only past critical; idle when the GPUs rest', () => {
+test('urgent only past the red temperature; idle when the GPUs rest', () => {
   const calm: GpuSnapshot = { available: true, gpus: [{ index: 0, uuid: 'a', name: 'x', temp: 40, util: 0, processes: [] }], history: {}, at: 0 };
-  assert.equal(anyCritical(calm, T), false);
+  assert.equal(anyAlert(calm, T), false);
   assert.equal(anyBusy(calm, T), false);
   assert.equal(anyBusy({ ...calm, gpus: [{ ...calm.gpus[0]!, processes: [{ pid: 1, name: 'ollama', mib: 9000 }] }] }, T), true, 'a model loaded is worth seeing');
   const hot = { ...calm, gpus: [{ ...calm.gpus[0]!, temp: 93 }] };
-  assert.equal(anyCritical(hot, T), true);
-  const st = (s: GpuSnapshot, takeOver = true) => ({ options: { ...T, takeOver, maxProcesses: 4, minutes: 30 }, data: undefined, sources: { [DEVICES_SOURCE]: s }, now: 0, working: true });
+  assert.equal(anyAlert(hot, T), true);
+  const st = (s: GpuSnapshot, gpus: string[] = []) => ({ options: { ...T, gpus, maxProcesses: 4, historyMs: 1_800_000 }, data: undefined, sources: { [DEVICES_SOURCE]: s }, now: 0, working: true, workday: DEFAULT_WORKDAY });
   assert.equal(cards.urgent!(st(hot)), true);
-  assert.equal(cards.urgent!(st(hot, false)), false);
+  assert.equal(cards.urgent!(st(hot, ['1'])), false, 'only the GPUs it shows count');
   assert.equal(cards.urgent!(st(calm)), false);
+  for (const w of plugin.widgets!) {
+    assert.equal('takeOver' in (w.options as { props: object }).props, false, `${w.id}: takeOver is the instance switch`);
+    assert.notEqual(w.takeOver, false, `${w.id}: keeps the tile by default`);
+  }
   assert.equal(cards.idle!(st(calm)), true);
   assert.equal(vram.idle!(st(demoSnapshot(0))), false);
   assert.equal(cards.urgent!(st({ available: false, reason: 'x', gpus: [], history: {}, at: 0 })), false);
@@ -55,19 +62,36 @@ test('history ring buffer: spaced samples, trimmed window, vanished GPUs dropped
   assert.equal(h.a, undefined);
 });
 
-test('source: reads honour the interval option and carry the history', async () => {
+test('gpus filter: by index, uuid or model; ! leaves out', () => {
+  const s = demoSnapshot(0);
+  const names = (f: string[] | string) => filterGpus(s, f).gpus.map((g) => g.index);
+  assert.equal(filterGpus(s, []), s, 'empty filter: the same snapshot');
+  assert.deepEqual(names(['1']), [1]);
+  assert.deepEqual(names(['*3090*']), [0]);
+  assert.deepEqual(names(['RTX A6000']), [1], 'short model name');
+  assert.deepEqual(names(['!*A6000*']), [0]);
+  assert.deepEqual(names('GPU-3a9e*'), [0], 'uuid');
+  assert.deepEqual(names(['7']), []);
+  assert.equal(filterGpus(undefined, ['0']), undefined);
+});
+
+test('source: Kiosko owns the cadence; every read carries the history', async () => {
   const csv = '0, GPU-x, NVIDIA GeForce RTX 4090, 60, N/A, 50, 1000, 24564, 200, 450, 40, 2000, 10000, 0x1\n';
   let runs = 0;
   const saved = { ...deps };
   Object.assign(deps, { run: async (argv: string[]) => (runs++, argv.some((a) => a.includes('compute-apps')) ? '' : csv), sysRoot: '/nonexistent' });
   try {
-    const o = { backend: 'nvidia' as const, ssh: '', url: '', token: '', label: '', processes: true, historyMinutes: 30, intervalMs: 5_000 };
-    const a = await readWithCache(o, undefined, 1_000_000);
-    const b = await readWithCache(o, undefined, 1_002_000);
-    assert.equal(a, b, 'within the interval the snapshot is reused');
-    assert.equal(runs, 2);
-    const c = await readWithCache(o, undefined, 1_005_000);
-    assert.equal(c.history['GPU-x']!.length, 2);
+    const o = { backend: 'nvidia' as const, ssh: '', url: '', token: '', label: '', processes: true, historyMs: 1_800_000 };
+    await readDevices(o, undefined, 1_000_000);
+    assert.equal(runs, 2, 'the GPUs and their processes');
+    await readDevices(o, undefined, 1_002_000);
+    assert.equal(runs, 4, 'no cache of its own: Kiosko decides when to read');
+    const c = await readDevices(o, undefined, 1_005_000);
+    assert.equal(c.history['GPU-x']!.length, 2, 'samples closer than 4 s are merged');
+    const props = (devices.options as { props: Record<string, unknown> }).props;
+    assert.equal('intervalMs' in props, false);
+    assert.equal(devices.intervalMs, 5_000);
+    assert.equal(devices.minIntervalMs, 1_000);
   } finally {
     Object.assign(deps, saved);
   }
@@ -102,6 +126,7 @@ test('render smoke: demo, unavailable and missing source, on strip and small pan
     { [DEVICES_SOURCE]: { available: false, reason: 'no GPU found', gpus: [], history: {}, at: now } },
     {},
     { [DEVICES_SOURCE]: { ...demoSnapshot(now), history: {}, label: undefined } },
+    { [DEVICES_SOURCE]: { ...demoSnapshot(now), gpus: [] } },
   ];
   for (const w of [cards, vram, historyWidget]) {
     for (const [W, H] of SIZES) {
@@ -109,12 +134,8 @@ test('render smoke: demo, unavailable and missing source, on strip and small pan
         const canvas = createCanvas(W, H);
         const g = canvas.getContext('2d');
         const ctx = {
-          now,
-          locale: 'es',
-          t: (x: Parameters<typeof localize>[0]) => localize(x, 'es'),
-          log: () => {},
-          dataDir: '/tmp',
-          options: { ...T, takeOver: true, maxProcesses: 4, minutes: 30 },
+          ...createBaseContext({ now, locale: 'es' }),
+          options: { ...T, gpus: [], maxProcesses: 4, historyMs: 1_800_000 },
           data: undefined,
           sources,
           working: true,

@@ -33,10 +33,10 @@ Uses: `gpu/devices`.
 | Option | Type | Default | |
 |---|---|---|---|
 | `tempWarn` | number | `80` | Amber temperature |
-| `tempCrit` | number | `90` | Critical temperature. Of the core (the hotspot or memory sensor when there is no core one). |
-| `vramWarn` | number | `0.9` | Amber VRAM from |
-| `vramCrit` | number | `0.97` | Red VRAM from |
-| `takeOver` | boolean | `true` | Take the cell over when critical. Marks the widget urgent while any GPU is past the critical temperature. |
+| `tempAlert` | number | `90` | Red temperature. Of the core (the hotspot or memory sensor when there is no core one). The widget keeps the tile while a GPU is past it. |
+| `vramWarn` | number | `90` | Amber VRAM from |
+| `vramAlert` | number | `97` | Red VRAM from |
+| `gpus` | list | `[]` | GPUs. Empty: all. Indexes or model names, comma-separated: * matches anything, a leading ! leaves out (0, 1, *4090*, !*A6000*). |
 
 ### GPU memory — `gpu/vram`
 
@@ -49,15 +49,15 @@ Uses: `gpu/devices`.
 | Option | Type | Default | |
 |---|---|---|---|
 | `tempWarn` | number | `80` | Amber temperature |
-| `tempCrit` | number | `90` | Critical temperature. Of the core (the hotspot or memory sensor when there is no core one). |
-| `vramWarn` | number | `0.9` | Amber VRAM from |
-| `vramCrit` | number | `0.97` | Red VRAM from |
-| `takeOver` | boolean | `true` | Take the cell over when critical. Marks the widget urgent while any GPU is past the critical temperature. |
-| `maxProcesses` | number | `4` | Processes per bar |
+| `tempAlert` | number | `90` | Red temperature. Of the core (the hotspot or memory sensor when there is no core one). The widget keeps the tile while a GPU is past it. |
+| `vramWarn` | number | `90` | Amber VRAM from |
+| `vramAlert` | number | `97` | Red VRAM from |
+| `gpus` | list | `[]` | GPUs. Empty: all. Indexes or model names, comma-separated: * matches anything, a leading ! leaves out (0, 1, *4090*, !*A6000*). |
+| `maxProcesses` | number | `4` | Processes per bar. The rest is grouped as "other". |
 
 ### GPU history — `gpu/history`
 
-Temperature line over load area for the last minutes, per GPU, with the critical line dashed.
+Temperature line over load area for the last minutes, per GPU, with the red temperature dashed.
 
 ![GPU history](docs/history.png)
 
@@ -66,17 +66,17 @@ Uses: `gpu/devices`.
 | Option | Type | Default | |
 |---|---|---|---|
 | `tempWarn` | number | `80` | Amber temperature |
-| `tempCrit` | number | `90` | Critical temperature. Of the core (the hotspot or memory sensor when there is no core one). |
-| `vramWarn` | number | `0.9` | Amber VRAM from |
-| `vramCrit` | number | `0.97` | Red VRAM from |
-| `takeOver` | boolean | `true` | Take the cell over when critical. Marks the widget urgent while any GPU is past the critical temperature. |
-| `minutes` | number | `30` | Minutes shown. Up to the history kept by the source. |
+| `tempAlert` | number | `90` | Red temperature. Of the core (the hotspot or memory sensor when there is no core one). The widget keeps the tile while a GPU is past it. |
+| `vramWarn` | number | `90` | Amber VRAM from |
+| `vramAlert` | number | `97` | Red VRAM from |
+| `gpus` | list | `[]` | GPUs. Empty: all. Indexes or model names, comma-separated: * matches anything, a leading ! leaves out (0, 1, *4090*, !*A6000*). |
+| `historyMs` | duration (ms) | `1800000` | Time shown. Up to the history kept by the source. |
 
 ## Data sources
 
 ### GPUs — `gpu/devices`
 
-Temperature, load, VRAM (and who holds it), power, fan and clocks per GPU, from this machine, another over ssh, or a Prometheus exporter. Read every 1 s while a widget uses it. Options are set once in Kiosko → Settings → Data sources.
+Temperature, load, VRAM (and who holds it), power, fan and clocks per GPU, from this machine, another over ssh, or a Prometheus exporter. Read every 5 s while a widget uses it. Options are set once in Kiosko → Settings → Data sources.
 
 | Option | Type | Default | |
 |---|---|---|---|
@@ -86,8 +86,7 @@ Temperature, load, VRAM (and who holds it), power, fan and clocks per GPU, from 
 | `token` | string | *(secret)* | Metrics bearer token. Only if the metrics URL is behind auth. |
 | `label` | string | `""` | Host label. Shown above the GPUs. Defaults to the ssh host. |
 | `processes` | boolean | `true` | Per-process VRAM. One more nvidia-smi call per reading. |
-| `historyMinutes` | number | `30` | History kept |
-| `intervalMs` | duration (ms) | `5000` | Read every |
+| `historyMs` | duration (ms) | `1800000` | History kept. How far back GPU history can look. |
 
 ## Development
 

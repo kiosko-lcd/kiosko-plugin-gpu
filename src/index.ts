@@ -4,10 +4,10 @@
  * ssh) and three widgets that read it: per-GPU cards, VRAM by process and
  * the temperature / load history.
  */
-import { defineSource, definePlugin, defineWidget, t } from '@kiosko/sdk';
+import { defineSource, definePlugin, defineWidget, t, type Filter } from '@kiosko/sdk';
 import { DEFAULT_DEPS, readGpus, type Deps } from './backends.ts';
 import { drawCards, drawHistory, drawVram } from './draw.ts';
-import { anyBusy, anyCritical, pushHistory, type Thresholds } from './gpu.ts';
+import { anyAlert, anyBusy, filterGpus, pushHistory, type Thresholds } from './gpu.ts';
 import { DEVICES_SOURCE, snapshotOf, type GpuDevice, type GpuSnapshot, type HistoryPoint } from './types.ts';
 
 export type { GpuDevice, GpuProcess, GpuSnapshot, HistoryPoint } from './types.ts';
@@ -105,8 +105,7 @@ const sourceOptions = t.object({
   token: t.string({ secret: true, advanced: true, label: { en: 'Metrics bearer token', es: 'Token bearer de las métricas' }, help: { en: 'Only if the metrics URL is behind auth.', es: 'Solo si la URL de métricas pide autenticación.' } }),
   label: t.string({ placeholder: 'gpubox', label: { en: 'Host label', es: 'Nombre del host' }, help: { en: 'Shown above the GPUs. Defaults to the ssh host.', es: 'Se muestra encima de las GPU. Por defecto, el host de ssh.' } }),
   processes: t.boolean({ default: true, label: { en: 'Per-process VRAM', es: 'VRAM por proceso' }, help: { en: 'One more nvidia-smi call per reading.', es: 'Una llamada más a nvidia-smi por lectura.' } }),
-  historyMinutes: t.integer({ default: 30, min: 1, max: 240, unit: 'min', label: { en: 'History kept', es: 'Historial guardado' } }),
-  intervalMs: t.duration({ default: 5_000, min: 1_000, max: 600_000, label: { en: 'Read every', es: 'Leer cada' } }),
+  historyMs: t.duration({ default: 30 * 60_000, min: 60_000, max: 4 * 3_600_000, label: { en: 'History kept', es: 'Historial guardado' }, help: { en: 'How far back GPU history can look.', es: 'Hasta dónde puede mirar atrás el historial de GPU.' } }),
 });
 
 /** The history, kept across reads by the one source instance. */
@@ -123,39 +122,43 @@ export const devices = defineSource({
     es: 'Temperatura, carga, VRAM (y quién la ocupa), potencia, ventilador y relojes por GPU, de esta máquina, de otra por ssh o de un exporter de Prometheus.',
   },
   options: sourceOptions,
-  // The real cadence is the `intervalMs` option: reads closer than it reuse the last snapshot.
-  intervalMs: 1_000,
-  async read({ options, signal, now }) {
-    return readWithCache(options, signal, now);
-  },
+  intervalMs: 5_000,
+  // One nvidia-smi call (two with per-process VRAM) is cheap; faster than this the history only gets noisier.
+  minIntervalMs: 1_000,
+  // Each back end gives up on its own after 10-15 s; `auto` may try several.
+  timeoutMs: 20_000,
+  read: ({ options, signal, now }) => readDevices(options, signal, now),
   demo: ({ now }) => demoSnapshot(now),
 });
 
-let last: { at: number; key: string; snap: GpuSnapshot } | undefined;
-
-export async function readWithCache(o: typeof sourceOptions.default, signal: AbortSignal | undefined, now: number): Promise<GpuSnapshot> {
-  const key = JSON.stringify([o.backend, o.ssh, o.url, o.label, o.processes]);
-  if (last && last.key === key && now - last.at < o.intervalMs - 250) return last.snap;
+/** One reading, with the history it adds to. */
+export async function readDevices(o: typeof sourceOptions.default, signal: AbortSignal | undefined, now: number): Promise<GpuSnapshot> {
   const snap = await readGpus(o, deps, signal, now);
-  snap.history = snap.available ? structuredClone(pushHistory(history, snap.gpus, now, o.historyMinutes * 60_000)) : {};
-  last = { at: now, key, snap };
+  snap.history = snap.available ? structuredClone(pushHistory(history, snap.gpus, now, o.historyMs)) : {};
   return snap;
 }
 
 /* ---------- Widgets ---------- */
 
-const thresholds = {
+const options = {
   tempWarn: t.integer({ default: 80, min: 30, max: 120, unit: '°C', label: { en: 'Amber temperature', es: 'Temperatura ámbar' } }),
-  tempCrit: t.integer({ default: 90, min: 30, max: 120, unit: '°C', label: { en: 'Critical temperature', es: 'Temperatura crítica' }, help: { en: 'Of the core (the hotspot or memory sensor when there is no core one).', es: 'Del núcleo (o del sensor de hotspot o de memoria si no hay del núcleo).' } }),
-  vramWarn: t.number({ default: 0.9, min: 0, max: 1, step: 0.01, slider: true, label: { en: 'Amber VRAM from', es: 'VRAM ámbar desde' } }),
-  vramCrit: t.number({ default: 0.97, min: 0, max: 1, step: 0.01, slider: true, label: { en: 'Red VRAM from', es: 'VRAM roja desde' } }),
+  tempAlert: t.integer({ default: 90, min: 30, max: 120, unit: '°C', label: { en: 'Red temperature', es: 'Temperatura roja' }, help: { en: 'Of the core (the hotspot or memory sensor when there is no core one). The widget keeps the tile while a GPU is past it.', es: 'Del núcleo (o del sensor de hotspot o de memoria si no hay del núcleo). El widget se queda la tesela mientras una GPU la pase.' } }),
+  vramWarn: t.integer({ default: 90, min: 0, max: 100, unit: '%', slider: true, label: { en: 'Amber VRAM from', es: 'VRAM ámbar desde' } }),
+  vramAlert: t.integer({ default: 97, min: 0, max: 100, unit: '%', slider: true, label: { en: 'Red VRAM from', es: 'VRAM roja desde' } }),
+  gpus: t.filter({
+    label: { en: 'GPUs', es: 'GPU' },
+    help: { en: 'Empty: all. Indexes or model names, comma-separated: * matches anything, a leading ! leaves out (0, 1, *4090*, !*A6000*).', es: 'Vacío: todas. Índices o modelos separados por comas: * vale por cualquier cosa y un ! delante excluye (0, 1, *4090*, !*A6000*).' },
+  }),
 };
-const takeOver = t.boolean({ default: true, label: { en: 'Take the cell over when critical', es: 'Quedarse la celda en temperatura crítica' }, help: { en: 'Marks the widget urgent while any GPU is past the critical temperature.', es: 'Marca el widget como urgente mientras alguna GPU pase la temperatura crítica.' } });
 
-type Th = Thresholds & { takeOver: boolean };
-const urgent = ({ options, sources }: { options: Th; sources: Record<string, unknown> }) => options.takeOver && anyCritical(snapshotOf(sources), options);
+type Opts = Thresholds & { gpus: Filter };
+type State = { options: Opts; sources: Record<string, unknown> };
+/** The widget's GPUs: the source's, through its `gpus` filter. */
+const gpusOf = ({ options, sources }: State) => filterGpus(snapshotOf(sources), options.gpus);
+// Keeps the tile while one of its GPUs is past the red temperature (the instance's "keep the tile" switch can turn it off).
+const urgent = (st: State) => anyAlert(gpusOf(st), st.options);
 // Dark when the GPUs rest: no load, no process holding memory, nothing in the red.
-const idle = ({ options, sources }: { options: Th; sources: Record<string, unknown> }) => !anyBusy(snapshotOf(sources), options);
+const idle = (st: State) => !anyBusy(gpusOf(st), st.options);
 const demo = ({ now }: { now: number }) => ({ sources: { [DEVICES_SOURCE]: demoSnapshot(now) } });
 
 export const cards = defineWidget({
@@ -169,10 +172,10 @@ export const cards = defineWidget({
   category: 'system',
   tags: ['gpu', 'nvidia', 'amd', 'vram', 'temperature', 'ai'],
   size: { min: { w: 150, h: 120 }, preferred: { w: 640, h: 462 } },
-  options: t.object({ ...thresholds, takeOver }),
+  options: t.object(options),
   sources: [DEVICES_SOURCE],
   render(g, ctx) {
-    drawCards(g, ctx, snapshotOf(ctx.sources), ctx.options);
+    drawCards(g, ctx, gpusOf(ctx), ctx.options);
   },
   urgent,
   idle,
@@ -190,10 +193,10 @@ export const vram = defineWidget({
   category: 'system',
   tags: ['gpu', 'vram', 'models', 'ai'],
   size: { min: { w: 200, h: 60 }, preferred: { w: 960, h: 230 } },
-  options: t.object({ ...thresholds, takeOver, maxProcesses: t.integer({ default: 4, min: 1, max: 12, label: { en: 'Processes per bar', es: 'Procesos por barra' } }) }),
+  options: t.object({ ...options, maxProcesses: t.integer({ default: 4, min: 1, max: 12, label: { en: 'Processes per bar', es: 'Procesos por barra' }, help: { en: 'The rest is grouped as "other".', es: 'El resto se agrupa como «otros».' } }) }),
   sources: [DEVICES_SOURCE],
   render(g, ctx) {
-    drawVram(g, ctx, snapshotOf(ctx.sources), ctx.options, ctx.options.maxProcesses);
+    drawVram(g, ctx, gpusOf(ctx), ctx.options, ctx.options.maxProcesses);
   },
   urgent,
   idle,
@@ -204,17 +207,17 @@ export const historyWidget = defineWidget({
   id: 'history',
   name: { en: 'GPU history', es: 'Historial de GPU' },
   description: {
-    en: 'Temperature line over load area for the last minutes, per GPU, with the critical line dashed.',
-    es: 'Línea de temperatura sobre área de carga de los últimos minutos, por GPU, con la línea crítica discontinua.',
+    en: 'Temperature line over load area for the last minutes, per GPU, with the red temperature dashed.',
+    es: 'Línea de temperatura sobre área de carga de los últimos minutos, por GPU, con la temperatura roja discontinua.',
   },
   icon: 'chart',
   category: 'system',
   tags: ['gpu', 'temperature', 'history', 'chart'],
   size: { min: { w: 200, h: 100 }, preferred: { w: 960, h: 230 } },
-  options: t.object({ ...thresholds, takeOver, minutes: t.integer({ default: 30, min: 1, max: 240, unit: 'min', label: { en: 'Minutes shown', es: 'Minutos mostrados' }, help: { en: 'Up to the history kept by the source.', es: 'Hasta el historial que guarda la fuente.' } }) }),
+  options: t.object({ ...options, historyMs: t.duration({ default: 30 * 60_000, min: 60_000, max: 4 * 3_600_000, label: { en: 'Time shown', es: 'Tiempo mostrado' }, help: { en: 'Up to the history kept by the source.', es: 'Hasta el historial que guarda la fuente.' } }) }),
   sources: [DEVICES_SOURCE],
   render(g, ctx) {
-    drawHistory(g, ctx, snapshotOf(ctx.sources), ctx.options, ctx.options.minutes);
+    drawHistory(g, ctx, gpusOf(ctx), ctx.options, ctx.options.historyMs);
   },
   urgent,
   idle,

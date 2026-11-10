@@ -3,19 +3,21 @@
  * ring buffer, when to take the cell over and when to let the panel sleep.
  * Tested without drawing.
  */
+import { matchFilter, type Filter } from '@kiosko/sdk';
 import type { GpuDevice, GpuSnapshot, HistoryPoint } from './types.ts';
 
 export interface Thresholds {
+  /** Core temperature, °C: amber from `tempWarn`, red from `tempAlert`. */
   tempWarn: number;
-  tempCrit: number;
-  /** VRAM fill, 0..1. */
+  tempAlert: number;
+  /** VRAM fill, % (0..100). */
   vramWarn: number;
-  vramCrit: number;
+  vramAlert: number;
 }
 
 export type Level = 'normal' | 'warn' | 'alert';
 
-export const DEFAULT_THRESHOLDS: Thresholds = { tempWarn: 80, tempCrit: 90, vramWarn: 0.9, vramCrit: 0.97 };
+export const DEFAULT_THRESHOLDS: Thresholds = { tempWarn: 80, tempAlert: 90, vramWarn: 90, vramAlert: 97 };
 
 /** `NVIDIA GeForce RTX 4090` → `RTX 4090`; `AMD Radeon RX 7900 XTX` → `RX 7900 XTX`. */
 export function shortName(name: string): string {
@@ -42,17 +44,19 @@ export function mainTemp(g: GpuDevice): number | undefined {
   return g.temp ?? g.hotspot ?? g.memTemp;
 }
 
-export function tempLevel(c: number | undefined, t: Pick<Thresholds, 'tempWarn' | 'tempCrit'>): Level {
-  return c === undefined ? 'normal' : c >= t.tempCrit ? 'alert' : c >= t.tempWarn ? 'warn' : 'normal';
+export function tempLevel(c: number | undefined, t: Pick<Thresholds, 'tempWarn' | 'tempAlert'>): Level {
+  return c === undefined ? 'normal' : c >= t.tempAlert ? 'alert' : c >= t.tempWarn ? 'warn' : 'normal';
 }
 
 export function vramRatio(g: GpuDevice): number | undefined {
   return g.memTotal && g.memUsed !== undefined ? g.memUsed / g.memTotal : undefined;
 }
 
-export function vramLevel(g: GpuDevice, t: Pick<Thresholds, 'vramWarn' | 'vramCrit'>): Level {
+export function vramLevel(g: GpuDevice, t: Pick<Thresholds, 'vramWarn' | 'vramAlert'>): Level {
   const r = vramRatio(g);
-  return r === undefined ? 'normal' : r >= t.vramCrit ? 'alert' : r >= t.vramWarn ? 'warn' : 'normal';
+  if (r === undefined) return 'normal';
+  const pct = r * 100;
+  return pct >= t.vramAlert ? 'alert' : pct >= t.vramWarn ? 'warn' : 'normal';
 }
 
 export function gpuTempLevel(g: GpuDevice, t: Thresholds): Level {
@@ -74,8 +78,19 @@ export function watts(w: number): string {
   return `${Math.round(w)}W`;
 }
 
-/** Any GPU past its critical temperature: worth taking the cell over. */
-export function anyCritical(s: GpuSnapshot | undefined, t: Thresholds): boolean {
+/** The names a GPU answers to in a `gpus` filter: its index, uuid, full and short model names. */
+export function gpuNames(g: Pick<GpuDevice, 'index' | 'uuid' | 'name'>): string[] {
+  return [String(g.index), g.uuid, g.name, shortName(g.name), `GPU ${g.index}`];
+}
+
+/** The snapshot with only the GPUs the filter lets through (the same object when the filter is empty). */
+export function filterGpus<S extends GpuSnapshot | undefined>(s: S, filter: Filter): S {
+  if (!s || !(typeof filter === 'string' ? filter.trim() : filter.length)) return s;
+  return { ...s, gpus: s.gpus.filter((g) => matchFilter(gpuNames(g), filter)) };
+}
+
+/** Any GPU past its red temperature: worth taking the cell over. */
+export function anyAlert(s: GpuSnapshot | undefined, t: Thresholds): boolean {
   return !!s?.available && s.gpus.some((g) => gpuTempLevel(g, t) === 'alert');
 }
 

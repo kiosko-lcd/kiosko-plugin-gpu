@@ -7,7 +7,7 @@ import type { Graphics, Localized, RenderContext, ThemeColors } from '@kiosko/sd
 import { gib, gpuTempLevel, gpuTitle, mainTemp, tempLevel, vramLevel, vramRatio, watts, type Level, type Thresholds } from './gpu.ts';
 import type { GpuDevice, GpuSnapshot, HistoryPoint } from './types.ts';
 
-type Ctx = Pick<RenderContext<unknown, unknown>, 'box' | 'theme' | 'kit' | 't' | 'now'>;
+type Ctx = Pick<RenderContext<unknown, unknown>, 'box' | 'theme' | 'kit' | 't' | 'now' | 'fmt'>;
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
@@ -22,7 +22,8 @@ export const TEXT = {
   noProcs: { en: 'no processes', es: 'sin procesos' },
   noData: { en: 'no GPU data (needs the gpu/devices source)', es: 'sin datos de GPU (necesita la fuente gpu/devices)' },
   unavailable: { en: 'no GPU: {reason}', es: 'sin GPU: {reason}' },
-  minutes: { en: 'last {n} min', es: 'últimos {n} min' },
+  noMatch: { en: 'no GPU matches the filter', es: 'ninguna GPU coincide con el filtro' },
+  last: { en: 'last {span}', es: 'últimos {span}' },
   collecting: { en: 'collecting…', es: 'recogiendo…' },
 } satisfies Record<string, Localized>;
 
@@ -32,12 +33,15 @@ export function levelColor(l: Level, c: ThemeColors, normal = c.inkDim): string 
   return l === 'alert' ? c.alert : l === 'warn' ? c.warn : normal;
 }
 
-/** Prints why there's nothing to draw, faint; returns false when there is something. */
+/**
+ * Prints why there's nothing to draw, faint; returns false when there is
+ * something. An available snapshot without GPUs is one the `gpus` filter emptied.
+ */
 function drawEmpty(g: Graphics, ctx: Ctx, s: GpuSnapshot | undefined): s is undefined {
   const { box, kit, theme, t } = ctx;
   if (s?.available && s.gpus.length) return false;
   const size = Math.max(10, Math.round(clamp(box.h / 18, 10, 18)));
-  const msg = !s ? t(TEXT.noData) : fill(t(TEXT.unavailable), { reason: s.reason ?? '?' });
+  const msg = !s ? t(TEXT.noData) : s.available ? t(TEXT.noMatch) : fill(t(TEXT.unavailable), { reason: s.reason ?? '?' });
   const lines = kit.wrapLines(g, msg, box.w, 4, { size, family: theme.fonts.mono });
   lines.forEach((l, i) => kit.drawTracked(g, l, box.x, box.y + size * 1.2 * (i + 1), { size, family: theme.fonts.mono, color: theme.colors.inkFaint }));
   return true;
@@ -188,13 +192,13 @@ export function drawVram(g: Graphics, ctx: Ctx, s: GpuSnapshot | undefined, th: 
 
 /* ---------- gpu/history ---------- */
 
-export function drawHistory(g: Graphics, ctx: Ctx, s: GpuSnapshot | undefined, th: Thresholds, minutes: number): void {
+
+export function drawHistory(g: Graphics, ctx: Ctx, s: GpuSnapshot | undefined, th: Thresholds, windowMs: number): void {
   if (drawEmpty(g, ctx, s)) return;
   const { box, kit, theme, now } = ctx;
   const c = theme.colors;
   const f = theme.fonts;
   const top = drawLabel(g, ctx, s!, clamp(box.h / 300, 0.6, 1.4));
-  const windowMs = minutes * 60_000;
   for (const [i, r] of slots(box.x, box.y + top, box.w, box.h - top, s!.gpus.length, 300).entries()) {
     const d = s!.gpus[i]!;
     const sc = clamp(Math.min(r.h / 220, r.w / 360), 0.5, 1.5);
@@ -211,16 +215,16 @@ export function drawHistory(g: Graphics, ctx: Ctx, s: GpuSnapshot | undefined, t
     g.fillRect(r.x, cy, r.w, ch);
     const pts = (s!.history[d.uuid] ?? []).filter((p) => p[0] >= now - windowMs);
     const px = (t: number) => r.x + ((t - (now - windowMs)) / windowMs) * r.w;
-    // Temperature scale 20..max(100, crit+5) °C; the critical line, faint and dashed.
+    // Temperature scale 20..max(100, alert+5) °C; the red line, faint and dashed.
     const tMin = 20;
-    const tMax = Math.max(100, th.tempCrit + 5);
+    const tMax = Math.max(100, th.tempAlert + 5);
     const ty = (v: number) => cy + ch - ((clamp(v, tMin, tMax) - tMin) / (tMax - tMin)) * ch;
     g.strokeStyle = c.surfaceEdge;
     g.setLineDash([4, 4]);
     g.lineWidth = 1;
     g.beginPath();
-    g.moveTo(r.x, Math.round(ty(th.tempCrit)) + 0.5);
-    g.lineTo(r.x + r.w, Math.round(ty(th.tempCrit)) + 0.5);
+    g.moveTo(r.x, Math.round(ty(th.tempAlert)) + 0.5);
+    g.lineTo(r.x + r.w, Math.round(ty(th.tempAlert)) + 0.5);
     g.stroke();
     g.setLineDash([]);
     if (pts.length < 2) {
@@ -236,7 +240,7 @@ export function drawHistory(g: Graphics, ctx: Ctx, s: GpuSnapshot | undefined, t
       const fy = cy + ch + 14 * sc;
       const lbl = { size: Math.max(9, Math.round(11 * sc)), family: f.sansBold, tracking: 2 * sc, smallCaps: true, color: c.inkFaint };
       kit.drawClipped(g, `${ctx.t(TEXT.temp)} — ${ctx.t(TEXT.util)} ▒`, r.x, fy, r.w / 2, lbl);
-      kit.drawTracked(g, fill(ctx.t(TEXT.minutes), { n: minutes }), r.x + r.w, fy, { ...lbl, align: 'right' });
+      kit.drawTracked(g, fill(ctx.t(TEXT.last), { span: ctx.fmt.duration(windowMs, { round: 'nearest', compact: true }) }), r.x + r.w, fy, { ...lbl, align: 'right' });
     }
   }
 }
