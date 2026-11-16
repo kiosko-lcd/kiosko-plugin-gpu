@@ -1,0 +1,712 @@
+{
+  "manifest": 1,
+  "id": "gpu",
+  "package": "kiosko-plugin-gpu",
+  "name": {
+    "en": "GPU",
+    "es": "GPU"
+  },
+  "version": "0.2.0",
+  "description": {
+    "en": "The GPUs of your AI box: temperature, load, VRAM by process and history. Local, over ssh or from a Prometheus exporter.",
+    "es": "Las GPU de tu máquina de IA: temperatura, carga, VRAM por proceso e historial. En local, por ssh o desde un exporter de Prometheus."
+  },
+  "author": "Kiosko",
+  "license": "MIT",
+  "homepage": "https://github.com/kiosko-lcd/kiosko-plugin-gpu#readme",
+  "repository": "https://github.com/kiosko-lcd/kiosko-plugin-gpu.git",
+  "icon": "cpu",
+  "sdk": "^0.2.0",
+  "platforms": [
+    "linux",
+    "darwin",
+    "win32"
+  ],
+  "languages": [
+    "en",
+    "es"
+  ],
+  "categories": [
+    "system"
+  ],
+  "tags": [
+    "gpu",
+    "nvidia",
+    "amd",
+    "vram",
+    "temperature",
+    "ai",
+    "models",
+    "history",
+    "chart"
+  ],
+  "permissions": {
+    "exec": [
+      "nvidia-smi",
+      "rocm-smi",
+      "amd-smi",
+      "ssh"
+    ],
+    "files": [
+      "/sys/class/drm"
+    ],
+    "network": [
+      "user"
+    ]
+  },
+  "riskyOptions": [
+    {
+      "path": "gpu/devices: ssh",
+      "risk": [
+        "exec"
+      ],
+      "secret": false
+    },
+    {
+      "path": "gpu/devices: url",
+      "risk": [
+        "network"
+      ],
+      "secret": true
+    },
+    {
+      "path": "gpu/devices: token",
+      "risk": [],
+      "secret": true
+    }
+  ],
+  "requires": [],
+  "optional": [],
+  "widgets": [
+    {
+      "type": "gpu/cards",
+      "name": {
+        "en": "GPU cards",
+        "es": "Tarjetas de GPU"
+      },
+      "description": {
+        "en": "One column per GPU: temperature, load, VRAM and power bars, fan and throttling. Dim until a threshold is crossed.",
+        "es": "Una columna por GPU: temperatura, carga, barras de VRAM y potencia, ventilador y limitación. Apagada hasta cruzar un umbral."
+      },
+      "icon": "cpu",
+      "category": "system",
+      "tags": [
+        "gpu",
+        "nvidia",
+        "amd",
+        "vram",
+        "temperature",
+        "ai"
+      ],
+      "size": {
+        "min": {
+          "w": 150,
+          "h": 120
+        },
+        "preferred": {
+          "w": 640,
+          "h": 462
+        }
+      },
+      "chrome": "card",
+      "sources": [
+        "gpu/devices"
+      ],
+      "options": {
+        "default": {
+          "tempWarn": 80,
+          "tempAlert": 90,
+          "vramWarn": 90,
+          "vramAlert": 97,
+          "gpus": []
+        },
+        "x-ui": {},
+        "type": "object",
+        "properties": {
+          "tempWarn": {
+            "title": "Amber temperature",
+            "default": 80,
+            "x-ui": {
+              "label": {
+                "en": "Amber temperature",
+                "es": "Temperatura ámbar"
+              },
+              "unit": "°C"
+            },
+            "type": "integer",
+            "minimum": 30,
+            "maximum": 120
+          },
+          "tempAlert": {
+            "title": "Red temperature",
+            "description": "Of the core (the hotspot or memory sensor when there is no core one). The widget keeps the tile while a GPU is past it.",
+            "default": 90,
+            "x-ui": {
+              "label": {
+                "en": "Red temperature",
+                "es": "Temperatura roja"
+              },
+              "help": {
+                "en": "Of the core (the hotspot or memory sensor when there is no core one). The widget keeps the tile while a GPU is past it.",
+                "es": "Del núcleo (o del sensor de hotspot o de memoria si no hay del núcleo). El widget se queda la tesela mientras una GPU la pase."
+              },
+              "unit": "°C"
+            },
+            "type": "integer",
+            "minimum": 30,
+            "maximum": 120
+          },
+          "vramWarn": {
+            "title": "Amber VRAM from",
+            "default": 90,
+            "x-ui": {
+              "label": {
+                "en": "Amber VRAM from",
+                "es": "VRAM ámbar desde"
+              },
+              "unit": "%",
+              "slider": true
+            },
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "vramAlert": {
+            "title": "Red VRAM from",
+            "default": 97,
+            "x-ui": {
+              "label": {
+                "en": "Red VRAM from",
+                "es": "VRAM roja desde"
+              },
+              "unit": "%",
+              "slider": true
+            },
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "gpus": {
+            "title": "GPUs",
+            "description": "Empty: all. Indexes or model names, comma-separated: * matches anything, a leading ! leaves out (0, 1, *4090*, !*A6000*).",
+            "default": [],
+            "x-ui": {
+              "label": {
+                "en": "GPUs",
+                "es": "GPU"
+              },
+              "help": {
+                "en": "Empty: all. Indexes or model names, comma-separated: * matches anything, a leading ! leaves out (0, 1, *4090*, !*A6000*).",
+                "es": "Vacío: todas. Índices o modelos separados por comas: * vale por cualquier cosa y un ! delante excluye (0, 1, *4090*, !*A6000*)."
+              },
+              "widget": "filter"
+            },
+            "type": "array",
+            "items": {
+              "default": "",
+              "x-ui": {
+                "placeholder": "name, group/*, !old-*"
+              },
+              "type": "string"
+            },
+            "x-filter": true
+          }
+        }
+      },
+      "screenshot": "docs/cards.png",
+      "animated": false,
+      "urgent": true
+    },
+    {
+      "type": "gpu/vram",
+      "name": {
+        "en": "GPU memory",
+        "es": "Memoria de GPU"
+      },
+      "description": {
+        "en": "VRAM per GPU as a bar stacked by process (ollama, vllm, python…), with what is left free.",
+        "es": "VRAM por GPU como una barra apilada por proceso (ollama, vllm, python…), con lo que queda libre."
+      },
+      "icon": "cpu",
+      "category": "system",
+      "tags": [
+        "gpu",
+        "vram",
+        "models",
+        "ai"
+      ],
+      "size": {
+        "min": {
+          "w": 200,
+          "h": 60
+        },
+        "preferred": {
+          "w": 960,
+          "h": 230
+        }
+      },
+      "chrome": "card",
+      "sources": [
+        "gpu/devices"
+      ],
+      "options": {
+        "default": {
+          "tempWarn": 80,
+          "tempAlert": 90,
+          "vramWarn": 90,
+          "vramAlert": 97,
+          "gpus": [],
+          "maxProcesses": 4
+        },
+        "x-ui": {},
+        "type": "object",
+        "properties": {
+          "tempWarn": {
+            "title": "Amber temperature",
+            "default": 80,
+            "x-ui": {
+              "label": {
+                "en": "Amber temperature",
+                "es": "Temperatura ámbar"
+              },
+              "unit": "°C"
+            },
+            "type": "integer",
+            "minimum": 30,
+            "maximum": 120
+          },
+          "tempAlert": {
+            "title": "Red temperature",
+            "description": "Of the core (the hotspot or memory sensor when there is no core one). The widget keeps the tile while a GPU is past it.",
+            "default": 90,
+            "x-ui": {
+              "label": {
+                "en": "Red temperature",
+                "es": "Temperatura roja"
+              },
+              "help": {
+                "en": "Of the core (the hotspot or memory sensor when there is no core one). The widget keeps the tile while a GPU is past it.",
+                "es": "Del núcleo (o del sensor de hotspot o de memoria si no hay del núcleo). El widget se queda la tesela mientras una GPU la pase."
+              },
+              "unit": "°C"
+            },
+            "type": "integer",
+            "minimum": 30,
+            "maximum": 120
+          },
+          "vramWarn": {
+            "title": "Amber VRAM from",
+            "default": 90,
+            "x-ui": {
+              "label": {
+                "en": "Amber VRAM from",
+                "es": "VRAM ámbar desde"
+              },
+              "unit": "%",
+              "slider": true
+            },
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "vramAlert": {
+            "title": "Red VRAM from",
+            "default": 97,
+            "x-ui": {
+              "label": {
+                "en": "Red VRAM from",
+                "es": "VRAM roja desde"
+              },
+              "unit": "%",
+              "slider": true
+            },
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "gpus": {
+            "title": "GPUs",
+            "description": "Empty: all. Indexes or model names, comma-separated: * matches anything, a leading ! leaves out (0, 1, *4090*, !*A6000*).",
+            "default": [],
+            "x-ui": {
+              "label": {
+                "en": "GPUs",
+                "es": "GPU"
+              },
+              "help": {
+                "en": "Empty: all. Indexes or model names, comma-separated: * matches anything, a leading ! leaves out (0, 1, *4090*, !*A6000*).",
+                "es": "Vacío: todas. Índices o modelos separados por comas: * vale por cualquier cosa y un ! delante excluye (0, 1, *4090*, !*A6000*)."
+              },
+              "widget": "filter"
+            },
+            "type": "array",
+            "items": {
+              "default": "",
+              "x-ui": {
+                "placeholder": "name, group/*, !old-*"
+              },
+              "type": "string"
+            },
+            "x-filter": true
+          },
+          "maxProcesses": {
+            "title": "Processes per bar",
+            "description": "The rest is grouped as \"other\".",
+            "default": 4,
+            "x-ui": {
+              "label": {
+                "en": "Processes per bar",
+                "es": "Procesos por barra"
+              },
+              "help": {
+                "en": "The rest is grouped as \"other\".",
+                "es": "El resto se agrupa como «otros»."
+              }
+            },
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 12
+          }
+        }
+      },
+      "screenshot": "docs/vram.png",
+      "animated": false,
+      "urgent": true
+    },
+    {
+      "type": "gpu/history",
+      "name": {
+        "en": "GPU history",
+        "es": "Historial de GPU"
+      },
+      "description": {
+        "en": "Temperature line over load area for the last minutes, per GPU, with the red temperature dashed.",
+        "es": "Línea de temperatura sobre área de carga de los últimos minutos, por GPU, con la temperatura roja discontinua."
+      },
+      "icon": "chart",
+      "category": "system",
+      "tags": [
+        "gpu",
+        "temperature",
+        "history",
+        "chart"
+      ],
+      "size": {
+        "min": {
+          "w": 200,
+          "h": 100
+        },
+        "preferred": {
+          "w": 960,
+          "h": 230
+        }
+      },
+      "chrome": "card",
+      "sources": [
+        "gpu/devices"
+      ],
+      "options": {
+        "default": {
+          "tempWarn": 80,
+          "tempAlert": 90,
+          "vramWarn": 90,
+          "vramAlert": 97,
+          "gpus": [],
+          "historyMs": 1800000
+        },
+        "x-ui": {},
+        "type": "object",
+        "properties": {
+          "tempWarn": {
+            "title": "Amber temperature",
+            "default": 80,
+            "x-ui": {
+              "label": {
+                "en": "Amber temperature",
+                "es": "Temperatura ámbar"
+              },
+              "unit": "°C"
+            },
+            "type": "integer",
+            "minimum": 30,
+            "maximum": 120
+          },
+          "tempAlert": {
+            "title": "Red temperature",
+            "description": "Of the core (the hotspot or memory sensor when there is no core one). The widget keeps the tile while a GPU is past it.",
+            "default": 90,
+            "x-ui": {
+              "label": {
+                "en": "Red temperature",
+                "es": "Temperatura roja"
+              },
+              "help": {
+                "en": "Of the core (the hotspot or memory sensor when there is no core one). The widget keeps the tile while a GPU is past it.",
+                "es": "Del núcleo (o del sensor de hotspot o de memoria si no hay del núcleo). El widget se queda la tesela mientras una GPU la pase."
+              },
+              "unit": "°C"
+            },
+            "type": "integer",
+            "minimum": 30,
+            "maximum": 120
+          },
+          "vramWarn": {
+            "title": "Amber VRAM from",
+            "default": 90,
+            "x-ui": {
+              "label": {
+                "en": "Amber VRAM from",
+                "es": "VRAM ámbar desde"
+              },
+              "unit": "%",
+              "slider": true
+            },
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "vramAlert": {
+            "title": "Red VRAM from",
+            "default": 97,
+            "x-ui": {
+              "label": {
+                "en": "Red VRAM from",
+                "es": "VRAM roja desde"
+              },
+              "unit": "%",
+              "slider": true
+            },
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "gpus": {
+            "title": "GPUs",
+            "description": "Empty: all. Indexes or model names, comma-separated: * matches anything, a leading ! leaves out (0, 1, *4090*, !*A6000*).",
+            "default": [],
+            "x-ui": {
+              "label": {
+                "en": "GPUs",
+                "es": "GPU"
+              },
+              "help": {
+                "en": "Empty: all. Indexes or model names, comma-separated: * matches anything, a leading ! leaves out (0, 1, *4090*, !*A6000*).",
+                "es": "Vacío: todas. Índices o modelos separados por comas: * vale por cualquier cosa y un ! delante excluye (0, 1, *4090*, !*A6000*)."
+              },
+              "widget": "filter"
+            },
+            "type": "array",
+            "items": {
+              "default": "",
+              "x-ui": {
+                "placeholder": "name, group/*, !old-*"
+              },
+              "type": "string"
+            },
+            "x-filter": true
+          },
+          "historyMs": {
+            "title": "Time shown",
+            "description": "Up to the history kept by the source.",
+            "default": 1800000,
+            "x-ui": {
+              "label": {
+                "en": "Time shown",
+                "es": "Tiempo mostrado"
+              },
+              "help": {
+                "en": "Up to the history kept by the source.",
+                "es": "Hasta el historial que guarda la fuente."
+              },
+              "unit": "ms"
+            },
+            "type": "integer",
+            "minimum": 60000,
+            "maximum": 14400000
+          }
+        }
+      },
+      "screenshot": "docs/history.png",
+      "animated": false,
+      "urgent": true
+    }
+  ],
+  "sources": [
+    {
+      "type": "gpu/devices",
+      "name": {
+        "en": "GPUs",
+        "es": "GPU"
+      },
+      "description": {
+        "en": "Temperature, load, VRAM (and who holds it), power, fan and clocks per GPU, from this machine, another over ssh, or a Prometheus exporter.",
+        "es": "Temperatura, carga, VRAM (y quién la ocupa), potencia, ventilador y relojes por GPU, de esta máquina, de otra por ssh o de un exporter de Prometheus."
+      },
+      "polled": true,
+      "intervalMs": 5000,
+      "options": {
+        "default": {
+          "backend": "auto",
+          "ssh": "",
+          "url": "",
+          "token": "",
+          "label": "",
+          "processes": true,
+          "historyMs": 1800000
+        },
+        "x-ui": {},
+        "type": "object",
+        "properties": {
+          "backend": {
+            "title": "Back end",
+            "description": "auto tries the metrics URL (if set), nvidia-smi, rocm-smi / amd-smi and sysfs, in that order.",
+            "default": "auto",
+            "x-ui": {
+              "label": {
+                "en": "Back end",
+                "es": "Origen"
+              },
+              "help": {
+                "en": "auto tries the metrics URL (if set), nvidia-smi, rocm-smi / amd-smi and sysfs, in that order.",
+                "es": "auto prueba la URL de métricas (si hay), nvidia-smi, rocm-smi / amd-smi y sysfs, por ese orden."
+              },
+              "labels": {
+                "auto": {
+                  "en": "Automatic",
+                  "es": "Automático"
+                },
+                "nvidia": "NVIDIA (nvidia-smi)",
+                "amd": "AMD (rocm-smi, amd-smi, sysfs)",
+                "intel": {
+                  "en": "Intel (sysfs, best effort)",
+                  "es": "Intel (sysfs, lo que se pueda)"
+                },
+                "prometheus": "Prometheus (DCGM / nvidia_gpu_exporter)"
+              }
+            },
+            "type": "string",
+            "enum": [
+              "auto",
+              "nvidia",
+              "amd",
+              "intel",
+              "prometheus"
+            ]
+          },
+          "ssh": {
+            "title": "Read over ssh",
+            "description": "Runs nvidia-smi / rocm-smi on that host with ssh -o BatchMode=yes: needs key login. Empty = this machine.",
+            "default": "",
+            "x-ui": {
+              "label": {
+                "en": "Read over ssh",
+                "es": "Leer por ssh"
+              },
+              "help": {
+                "en": "Runs nvidia-smi / rocm-smi on that host with ssh -o BatchMode=yes: needs key login. Empty = this machine.",
+                "es": "Ejecuta nvidia-smi / rocm-smi en ese host con ssh -o BatchMode=yes: necesita acceso por clave. Vacío = esta máquina."
+              },
+              "placeholder": "user@gpubox"
+            },
+            "x-risk": "exec",
+            "type": "string"
+          },
+          "url": {
+            "title": "Metrics URL",
+            "description": "DCGM exporter (port 9400) or nvidia_gpu_exporter (port 9835). Secret: leave it empty (or a placeholder such as \"<token>\"). Kiosko keeps the value it already has, or asks for it in the editor.",
+            "default": "",
+            "x-ui": {
+              "label": {
+                "en": "Metrics URL",
+                "es": "URL de métricas"
+              },
+              "help": {
+                "en": "DCGM exporter (port 9400) or nvidia_gpu_exporter (port 9835).",
+                "es": "DCGM exporter (puerto 9400) o nvidia_gpu_exporter (puerto 9835)."
+              },
+              "secret": true,
+              "placeholder": "http://gpubox:9400/metrics",
+              "format": "url"
+            },
+            "x-secret": true,
+            "x-risk": "network",
+            "type": "string"
+          },
+          "token": {
+            "title": "Metrics bearer token",
+            "description": "Only if the metrics URL is behind auth. Secret: leave it empty (or a placeholder such as \"<token>\"). Kiosko keeps the value it already has, or asks for it in the editor.",
+            "default": "",
+            "x-ui": {
+              "label": {
+                "en": "Metrics bearer token",
+                "es": "Token bearer de las métricas"
+              },
+              "help": {
+                "en": "Only if the metrics URL is behind auth.",
+                "es": "Solo si la URL de métricas pide autenticación."
+              },
+              "advanced": true,
+              "secret": true
+            },
+            "x-secret": true,
+            "type": "string"
+          },
+          "label": {
+            "title": "Host label",
+            "description": "Shown above the GPUs. Defaults to the ssh host.",
+            "default": "",
+            "x-ui": {
+              "label": {
+                "en": "Host label",
+                "es": "Nombre del host"
+              },
+              "help": {
+                "en": "Shown above the GPUs. Defaults to the ssh host.",
+                "es": "Se muestra encima de las GPU. Por defecto, el host de ssh."
+              },
+              "placeholder": "gpubox"
+            },
+            "type": "string"
+          },
+          "processes": {
+            "title": "Per-process VRAM",
+            "description": "One more nvidia-smi call per reading.",
+            "default": true,
+            "x-ui": {
+              "label": {
+                "en": "Per-process VRAM",
+                "es": "VRAM por proceso"
+              },
+              "help": {
+                "en": "One more nvidia-smi call per reading.",
+                "es": "Una llamada más a nvidia-smi por lectura."
+              }
+            },
+            "type": "boolean"
+          },
+          "historyMs": {
+            "title": "History kept",
+            "description": "How far back GPU history can look.",
+            "default": 1800000,
+            "x-ui": {
+              "label": {
+                "en": "History kept",
+                "es": "Historial guardado"
+              },
+              "help": {
+                "en": "How far back GPU history can look.",
+                "es": "Hasta dónde puede mirar atrás el historial de GPU."
+              },
+              "unit": "ms"
+            },
+            "type": "integer",
+            "minimum": 60000,
+            "maximum": 14400000
+          }
+        }
+      }
+    }
+  ],
+  "interludes": [],
+  "templates": []
+}

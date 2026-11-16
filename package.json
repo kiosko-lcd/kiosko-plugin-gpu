@@ -1,6 +1,6 @@
 {
   "name": "kiosko-plugin-gpu",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "GPU monitor for local AI boxes: temperature, load, VRAM by process and history, from nvidia-smi, rocm-smi, sysfs, Prometheus (DCGM) or over ssh.",
   "type": "module",
   "license": "MIT",
@@ -28,10 +28,14 @@
   },
   "kiosko": {
     "plugin": "./dist/index.js",
-    "id": "gpu"
+    "id": "gpu",
+    "sdk": "^0.2.0",
+    "manifest": "./kiosko-manifest.json"
   },
   "files": [
     "dist",
+    "docs",
+    "kiosko-manifest.json",
     "README.md",
     "LICENSE"
   ],
@@ -44,8 +48,11 @@
     "check": "tsc -p tsconfig.json",
     "prepublishOnly": "npm run build"
   },
+  "peerDependencies": {
+    "@kiosko/sdk": "^0.2.0"
+  },
   "devDependencies": {
-    "@kiosko/sdk": "^0.2.0",
+    "@kiosko/sdk": "^0.2.1",
     "@loksly/lcd-canvas-kit": "^0.2.0",
     "@napi-rs/canvas": "^1.0.10",
     "@types/node": "^24.0.0",
