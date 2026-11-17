@@ -227,7 +227,7 @@ export const historyWidget = defineWidget({
 export default definePlugin({
   id: 'gpu',
   name: { en: 'GPU', es: 'GPU' },
-  version: '0.2.0',
+  version: '0.2.1',
   sdk: '^0.2.0',
   permissions: { exec: ['nvidia-smi', 'rocm-smi', 'amd-smi', 'ssh'], files: ['/sys/class/drm'], network: ['user'] },
   description: {
