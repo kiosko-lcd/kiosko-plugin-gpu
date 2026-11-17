@@ -227,7 +227,9 @@ export const historyWidget = defineWidget({
 export default definePlugin({
   id: 'gpu',
   name: { en: 'GPU', es: 'GPU' },
-  version: '0.2.0',
+  version: '0.2.1',
+  sdk: '^0.2.0',
+  permissions: { exec: ['nvidia-smi', 'rocm-smi', 'amd-smi', 'ssh'], files: ['/sys/class/drm'], network: ['user'] },
   description: {
     en: 'The GPUs of your AI box: temperature, load, VRAM by process and history. Local, over ssh or from a Prometheus exporter.',
     es: 'Las GPU de tu máquina de IA: temperatura, carga, VRAM por proceso e historial. En local, por ssh o desde un exporter de Prometheus.',

@@ -230,15 +230,22 @@ export function drawHistory(g: Graphics, ctx: Ctx, s: GpuSnapshot | undefined, t
     if (pts.length < 2) {
       kit.drawClipped(g, ctx.t(TEXT.collecting), r.x + 6, cy + ch / 2, r.w - 12, { size: Math.max(9, Math.round(13 * sc)), family: f.mono, color: c.inkFaint });
     } else {
-      // Load as a faint filled area (0..100 %), temperature as a line on top.
+      // Load as a faint filled area (0..100 %), temperature as a line on top, both
+      // kept inside the chart: a thick line at 20 °C or at either end would spill half its width out.
+      g.save();
+      g.beginPath();
+      g.rect(r.x, cy, r.w, ch);
+      g.clip();
       area(g, pts, px, (p) => (p[2] === null ? null : cy + ch - (clamp(p[2], 0, 100) / 100) * ch), cy + ch, c.inkFaint);
       line(g, pts, px, (p) => (p[1] === null ? null : ty(p[1])), (p) => levelColor(tempLevel(p[1] ?? undefined, th), c), Math.max(1.5, 2.5 * sc));
+      g.restore();
     }
     g.strokeStyle = c.surfaceEdge;
     g.strokeRect(r.x + 0.5, cy + 0.5, r.w - 1, ch - 1);
     if (footH) {
-      const fy = cy + ch + 14 * sc;
       const lbl = { size: Math.max(9, Math.round(11 * sc)), family: f.sansBold, tracking: 2 * sc, smallCaps: true, color: c.inkFaint };
+      // Baseline high enough for the descent of "▒" to stay in the box.
+      const fy = Math.min(cy + ch + 14 * sc, r.y + r.h - Math.ceil(lbl.size * 0.32));
       kit.drawClipped(g, `${ctx.t(TEXT.temp)} — ${ctx.t(TEXT.util)} ▒`, r.x, fy, r.w / 2, lbl);
       kit.drawTracked(g, fill(ctx.t(TEXT.last), { span: ctx.fmt.duration(windowMs, { round: 'nearest', compact: true }) }), r.x + r.w, fy, { ...lbl, align: 'right' });
     }

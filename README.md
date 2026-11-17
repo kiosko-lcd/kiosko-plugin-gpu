@@ -20,6 +20,12 @@ npm install --prefix ~/.config/kiosko/plugins kiosko-plugin-gpu
 
 - A GPU and its tool: `nvidia-smi` (NVIDIA driver), `rocm-smi` or `amd-smi` (ROCm), or the amdgpu / i915 / xe drivers for sysfs readings. For another machine: key-based `ssh` to it (the CLIs run there), or a Prometheus URL serving [DCGM exporter](https://github.com/NVIDIA/dcgm-exporter) or [nvidia_gpu_exporter](https://github.com/utkuozdemir/nvidia_gpu_exporter) metrics.
 
+## What it does on your machine
+
+- **Internet**: contacts the ones you set in its options.
+- **Runs**: `nvidia-smi`, `rocm-smi`, `amd-smi`, `ssh`.
+- **Reads**: `/sys/class/drm`.
+
 ## Widgets
 
 ### GPU cards — `gpu/cards`
