@@ -12,28 +12,28 @@ type Ctx = Pick<RenderContext<unknown, unknown>, 'box' | 'theme' | 'kit' | 't' |
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
 export const TEXT = {
-  temp: { en: 'temp', es: 'temp', 'zh-Hant': '溫度', 'zh-Hans': '温度' },
-  util: { en: 'load', es: 'carga', 'zh-Hant': '負載', 'zh-Hans': '负载' },
-  vram: { en: 'vram', es: 'vram', 'zh-Hant': 'vram', 'zh-Hans': 'vram' },
-  power: { en: 'power', es: 'potencia', 'zh-Hant': '功率', 'zh-Hans': '功率' },
-  fan: { en: 'fan', es: 'vent.', 'zh-Hant': '風扇', 'zh-Hans': '风扇' },
-  free: { en: 'free', es: 'libre', 'zh-Hant': '可用', 'zh-Hans': '可用' },
-  other: { en: 'other', es: 'otros', 'zh-Hant': '其他', 'zh-Hans': '其他' },
-  noProcs: { en: 'no processes', es: 'sin procesos', 'zh-Hant': '無處理程序', 'zh-Hans': '无进程' },
-  noData: { en: 'no GPU data (needs the gpu/devices source)', es: 'sin datos de GPU (necesita la fuente gpu/devices)', 'zh-Hant': '無 GPU 資料（需要 gpu/devices 資料來源）', 'zh-Hans': '无 GPU 数据（需要 gpu/devices 数据源）' },
-  unavailable: { en: 'no GPU: {reason}', es: 'sin GPU: {reason}', 'zh-Hant': '無 GPU：{reason}', 'zh-Hans': '无 GPU：{reason}' },
-  noMatch: { en: 'no GPU matches the filter', es: 'ninguna GPU coincide con el filtro', 'zh-Hant': '沒有符合篩選條件的 GPU', 'zh-Hans': '没有符合筛选条件的 GPU' },
-  last: { en: 'last {span}', es: 'últimos {span}', 'zh-Hant': '最近 {span}', 'zh-Hans': '最近 {span}' },
-  collecting: { en: 'collecting…', es: 'recogiendo…', 'zh-Hant': '收集中…', 'zh-Hans': '采集中…' },
+  temp: { en: 'temp', es: 'temp', de: 'Temp', 'zh-Hant': '溫度', 'zh-Hans': '温度' },
+  util: { en: 'load', es: 'carga', de: 'Last', 'zh-Hant': '負載', 'zh-Hans': '负载' },
+  vram: { en: 'vram', es: 'vram', de: 'VRAM', 'zh-Hant': 'vram', 'zh-Hans': 'vram' },
+  power: { en: 'power', es: 'potencia', de: 'Leistung', 'zh-Hant': '功率', 'zh-Hans': '功率' },
+  fan: { en: 'fan', es: 'vent.', de: 'Lüfter', 'zh-Hant': '風扇', 'zh-Hans': '风扇' },
+  free: { en: 'free', es: 'libre', de: 'frei', 'zh-Hant': '可用', 'zh-Hans': '可用' },
+  other: { en: 'other', es: 'otros', de: 'andere', 'zh-Hant': '其他', 'zh-Hans': '其他' },
+  noProcs: { en: 'no processes', es: 'sin procesos', de: 'keine Prozesse', 'zh-Hant': '無處理程序', 'zh-Hans': '无进程' },
+  noData: { en: 'no GPU data (needs the gpu/devices source)', es: 'sin datos de GPU (necesita la fuente gpu/devices)', de: 'keine GPU-Daten (braucht die Datenquelle gpu/devices)', 'zh-Hant': '無 GPU 資料（需要 gpu/devices 資料來源）', 'zh-Hans': '无 GPU 数据（需要 gpu/devices 数据源）' },
+  unavailable: { en: 'no GPU: {reason}', es: 'sin GPU: {reason}', de: 'keine GPU: {reason}', 'zh-Hant': '無 GPU：{reason}', 'zh-Hans': '无 GPU：{reason}' },
+  noMatch: { en: 'no GPU matches the filter', es: 'ninguna GPU coincide con el filtro', de: 'keine GPU passt zum Filter', 'zh-Hant': '沒有符合篩選條件的 GPU', 'zh-Hans': '没有符合筛选条件的 GPU' },
+  last: { en: 'last {span}', es: 'últimos {span}', de: 'letzte {span}', 'zh-Hant': '最近 {span}', 'zh-Hans': '最近 {span}' },
+  collecting: { en: 'collecting…', es: 'recogiendo…', de: 'sammle…', 'zh-Hant': '收集中…', 'zh-Hans': '采集中…' },
 } satisfies Record<string, Localized>;
 
 /** Throttle reasons as `nvidia-smi` names them, in the user's language. */
 export const THROTTLE: Record<string, Localized> = {
-  'power cap': { en: 'power cap', es: 'tope de potencia', 'zh-Hant': '功耗上限', 'zh-Hans': '功耗上限' },
-  'hw slowdown': { en: 'hw slowdown', es: 'freno hw', 'zh-Hant': '硬體降頻', 'zh-Hans': '硬件降频' },
-  thermal: { en: 'thermal', es: 'térmico', 'zh-Hant': '過熱降頻', 'zh-Hans': '过热降频' },
-  'hw thermal': { en: 'hw thermal', es: 'térmico hw', 'zh-Hant': '硬體過熱降頻', 'zh-Hans': '硬件过热降频' },
-  'power brake': { en: 'power brake', es: 'freno de potencia', 'zh-Hant': '電源制動降頻', 'zh-Hans': '电源制动降频' },
+  'power cap': { en: 'power cap', es: 'tope de potencia', de: 'Leistungslimit', 'zh-Hant': '功耗上限', 'zh-Hans': '功耗上限' },
+  'hw slowdown': { en: 'hw slowdown', es: 'freno hw', de: 'HW-Drosselung', 'zh-Hant': '硬體降頻', 'zh-Hans': '硬件降频' },
+  thermal: { en: 'thermal', es: 'térmico', de: 'thermisch', 'zh-Hant': '過熱降頻', 'zh-Hans': '过热降频' },
+  'hw thermal': { en: 'hw thermal', es: 'térmico hw', de: 'HW thermisch', 'zh-Hant': '硬體過熱降頻', 'zh-Hans': '硬件过热降频' },
+  'power brake': { en: 'power brake', es: 'freno de potencia', de: 'Leistungsbremse', 'zh-Hant': '電源制動降頻', 'zh-Hans': '电源制动降频' },
 };
 
 const fill = (text: string, vars: Record<string, string | number>) => text.replace(/\{(\w+)\}/g, (_, k: string) => String(vars[k] ?? ''));

@@ -191,8 +191,8 @@ export async function readGpus(o: ReadOptions, d: Deps = DEFAULT_DEPS, signal?: 
   const base = { gpus: [], history: {}, at: now, ...(label ? { label } : {}) };
   /** A reason the user can act on, in their language too. */
   const because = (text: { en: string } & Localized) => ({ ...base, available: false, reason: text.en, reasonText: text });
-  if (o.ssh && !validSshHost(o.ssh)) return because({ en: `invalid ssh host: ${o.ssh}`, es: `host ssh no válido: ${o.ssh}`, 'zh-Hant': `ssh 主機無效：${o.ssh}`, 'zh-Hans': `ssh 主机无效：${o.ssh}` });
-  if (o.backend === 'prometheus' && !o.url) return because({ en: 'no metrics URL set', es: 'falta la URL de las métricas', 'zh-Hant': '尚未設定指標 URL', 'zh-Hans': '尚未设置指标 URL' });
+  if (o.ssh && !validSshHost(o.ssh)) return because({ en: `invalid ssh host: ${o.ssh}`, es: `host ssh no válido: ${o.ssh}`, de: `ungültiger ssh-Host: ${o.ssh}`, 'zh-Hant': `ssh 主機無效：${o.ssh}`, 'zh-Hans': `ssh 主机无效：${o.ssh}` });
+  if (o.backend === 'prometheus' && !o.url) return because({ en: 'no metrics URL set', es: 'falta la URL de las métricas', de: 'keine Metrik-URL eingetragen', 'zh-Hant': '尚未設定指標 URL', 'zh-Hans': '尚未设置指标 URL' });
   const nvidia: Attempt = ['nvidia', () => readNvidia(o, d, signal)];
   const amd: Attempt = ['amd', () => readAmdCli(o, d, signal)];
   const amdSys: Attempt = ['amd-sysfs', () => readSysfs(d.sysRoot, 'amd')];
@@ -206,7 +206,7 @@ export async function readGpus(o: ReadOptions, d: Deps = DEFAULT_DEPS, signal?: 
     : o.backend === 'intel' ? local([intel])
     : o.backend === 'prometheus' ? [prom]
     : [...(o.url ? [prom] : []), nvidia, amd, ...local([amdSys, intel])];
-  if (!plan.length) return because({ en: 'the intel back end reads sysfs and only works locally', es: 'el modo intel lee sysfs y sólo funciona en local', 'zh-Hant': 'intel 後端讀取 sysfs，只能在本機使用', 'zh-Hans': 'intel 后端读取 sysfs，只能在本机使用' });
+  if (!plan.length) return because({ en: 'the intel back end reads sysfs and only works locally', es: 'el modo intel lee sysfs y sólo funciona en local', de: 'das Intel-Backend liest sysfs und funktioniert nur lokal', 'zh-Hant': 'intel 後端讀取 sysfs，只能在本機使用', 'zh-Hans': 'intel 后端读取 sysfs，只能在本机使用' });
   const reasons: string[] = [];
   for (const [name, attempt] of plan) {
     try {
@@ -218,6 +218,6 @@ export async function readGpus(o: ReadOptions, d: Deps = DEFAULT_DEPS, signal?: 
       reasons.push(`${name}: ${e instanceof Error ? e.message : String(e)}`);
     }
   }
-  if (o.backend === 'auto' && reasons.every((r) => /not found|no GPU/.test(r))) return because({ en: 'no GPU found', es: 'no se encontró ninguna GPU', 'zh-Hant': '找不到 GPU', 'zh-Hans': '未找到 GPU' });
+  if (o.backend === 'auto' && reasons.every((r) => /not found|no GPU/.test(r))) return because({ en: 'no GPU found', es: 'no se encontró ninguna GPU', de: 'keine GPU gefunden', 'zh-Hant': '找不到 GPU', 'zh-Hans': '未找到 GPU' });
   return { ...base, available: false, reason: reasons.join('; ') };
 }
