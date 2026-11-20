@@ -3,6 +3,7 @@
  * is optional: each back end knows a different subset (DCGM has no fan,
  * sysfs has no process list), and what can't be read is simply not painted.
  */
+import type { Localized } from '@kiosko/sdk';
 
 export interface GpuProcess {
   pid: number;
@@ -51,6 +52,8 @@ export interface GpuSnapshot {
   /** False when there is no GPU or no tool to read it: `reason` says why. */
   available: boolean;
   reason?: string;
+  /** The reason in the user's language, when it is one they can act on (a setting). */
+  reasonText?: Localized;
   /** Back end that answered (`nvidia`, `amd`, `amd-sysfs`, `prometheus`…). */
   backend?: string;
   /** Host label to show, when set or when reading over ssh. */

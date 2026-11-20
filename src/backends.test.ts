@@ -3,6 +3,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
+import { localize } from '@kiosko/sdk';
 import { commandFor, MissingTool, readGpus, readSysfs, validSshHost, type Deps, type ReadOptions } from './backends.ts';
 
 const fx = (name: string) => readFileSync(join(import.meta.dirname, 'fixtures', name), 'utf8');
@@ -61,6 +62,7 @@ test('process list failing does not lose the GPUs', async () => {
 test('nothing at all: available false, "no GPU found", never throws', async () => {
   const s = await readGpus(O, fake({}));
   assert.deepEqual([s.available, s.reason, s.gpus.length], [false, 'no GPU found', 0]);
+  assert.equal(localize(s.reasonText, 'zh-CN'), '未找到 GPU');
 });
 
 test('explicit back end failing gives its error as the reason', async () => {
@@ -106,6 +108,7 @@ test('prometheus: fetches the URL with the token, parses DCGM', async () => {
   assert.deepEqual(seen![1]!.headers, { authorization: 'Bearer abc' });
   const bad = await readGpus({ ...O, backend: 'prometheus' }, d);
   assert.match(bad.reason!, /no metrics URL/);
+  assert.equal(localize(bad.reasonText, 'zh-TW'), '尚未設定指標 URL');
 });
 
 test('sysfs: amdgpu card with hwmon and VRAM, Intel card next to it', async () => {
@@ -142,4 +145,12 @@ test('sysfs: amdgpu card with hwmon and VRAM, Intel card next to it', async () =
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
+});
+
+test('throttle reasons are painted in the user language', async () => {
+  const { THROTTLE } = await import('./draw.ts');
+  assert.equal(localize(THROTTLE['power cap'], 'en'), 'power cap');
+  assert.equal(localize(THROTTLE['power cap'], 'zh-TW'), '功耗上限');
+  assert.equal(localize(THROTTLE.thermal, 'zh-Hant'), '過熱降頻');
+  assert.equal(localize(THROTTLE.thermal, 'zh-CN'), '过热降频');
 });
