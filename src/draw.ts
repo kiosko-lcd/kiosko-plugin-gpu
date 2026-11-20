@@ -27,6 +27,15 @@ export const TEXT = {
   collecting: { en: 'collecting…', es: 'recogiendo…', 'zh-Hant': '收集中…', 'zh-Hans': '采集中…' },
 } satisfies Record<string, Localized>;
 
+/** Throttle reasons as `nvidia-smi` names them, in the user's language. */
+export const THROTTLE: Record<string, Localized> = {
+  'power cap': { en: 'power cap', es: 'tope de potencia', 'zh-Hant': '功耗上限', 'zh-Hans': '功耗上限' },
+  'hw slowdown': { en: 'hw slowdown', es: 'freno hw', 'zh-Hant': '硬體降頻', 'zh-Hans': '硬件降频' },
+  thermal: { en: 'thermal', es: 'térmico', 'zh-Hant': '過熱降頻', 'zh-Hans': '过热降频' },
+  'hw thermal': { en: 'hw thermal', es: 'térmico hw', 'zh-Hant': '硬體過熱降頻', 'zh-Hans': '硬件过热降频' },
+  'power brake': { en: 'power brake', es: 'freno de potencia', 'zh-Hant': '電源制動降頻', 'zh-Hans': '电源制动降频' },
+};
+
 const fill = (text: string, vars: Record<string, string | number>) => text.replace(/\{(\w+)\}/g, (_, k: string) => String(vars[k] ?? ''));
 
 export function levelColor(l: Level, c: ThemeColors, normal = c.inkDim): string {
@@ -41,7 +50,7 @@ function drawEmpty(g: Graphics, ctx: Ctx, s: GpuSnapshot | undefined): s is unde
   const { box, kit, theme, t } = ctx;
   if (s?.available && s.gpus.length) return false;
   const size = Math.max(10, Math.round(clamp(box.h / 18, 10, 18)));
-  const msg = !s ? t(TEXT.noData) : s.available ? t(TEXT.noMatch) : fill(t(TEXT.unavailable), { reason: s.reason ?? '?' });
+  const msg = !s ? t(TEXT.noData) : s.available ? t(TEXT.noMatch) : fill(t(TEXT.unavailable), { reason: s.reasonText ? t(s.reasonText) : (s.reason ?? '?') });
   const lines = kit.wrapLines(g, msg, box.w, 4, { size, family: theme.fonts.mono });
   lines.forEach((l, i) => kit.drawTracked(g, l, box.x, box.y + size * 1.2 * (i + 1), { size, family: theme.fonts.mono, color: theme.colors.inkFaint }));
   return true;
@@ -124,7 +133,7 @@ function drawCard(g: Graphics, ctx: Ctx, d: GpuDevice, r: { x: number; y: number
   }
 
   // Footer: fan, clocks, throttling — only if there's room.
-  const foot = [d.fan !== undefined ? `${ctx.t(TEXT.fan)} ${Math.round(d.fan)}%` : '', d.smClock ? `${Math.round(d.smClock)}MHz` : '', ...(d.throttle ?? [])].filter(Boolean);
+  const foot = [d.fan !== undefined ? `${ctx.t(TEXT.fan)} ${Math.round(d.fan)}%` : '', d.smClock ? `${Math.round(d.smClock)}MHz` : '', ...(d.throttle ?? []).map((x) => (THROTTLE[x] ? ctx.t(THROTTLE[x]) : x))].filter(Boolean);
   const fs = Math.max(9, Math.round(13 * s));
   if (foot.length && y + fs * 1.8 <= r.y + r.h) {
     const throttled = (d.throttle?.length ?? 0) > 0 && d.throttle!.some((x) => /thermal|slowdown|brake/.test(x));
