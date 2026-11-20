@@ -236,6 +236,7 @@ export default definePlugin({
   id: 'gpu',
   name: { en: 'GPU', es: 'GPU', 'zh-Hant': 'GPU', 'zh-Hans': 'GPU' },
   version: '0.2.1',
+  languages: ['en', 'es', 'zh-Hant', 'zh-Hans'],
   sdk: '^0.2.0',
   permissions: { exec: ['nvidia-smi', 'rocm-smi', 'amd-smi', 'ssh'], files: ['/sys/class/drm'], network: ['user'] },
   description: {
