@@ -12,19 +12,19 @@ type Ctx = Pick<RenderContext<unknown, unknown>, 'box' | 'theme' | 'kit' | 't' |
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
 export const TEXT = {
-  temp: { en: 'temp', es: 'temp' },
-  util: { en: 'load', es: 'carga' },
-  vram: { en: 'vram', es: 'vram' },
-  power: { en: 'power', es: 'potencia' },
-  fan: { en: 'fan', es: 'vent.' },
-  free: { en: 'free', es: 'libre' },
-  other: { en: 'other', es: 'otros' },
-  noProcs: { en: 'no processes', es: 'sin procesos' },
-  noData: { en: 'no GPU data (needs the gpu/devices source)', es: 'sin datos de GPU (necesita la fuente gpu/devices)' },
-  unavailable: { en: 'no GPU: {reason}', es: 'sin GPU: {reason}' },
-  noMatch: { en: 'no GPU matches the filter', es: 'ninguna GPU coincide con el filtro' },
-  last: { en: 'last {span}', es: 'últimos {span}' },
-  collecting: { en: 'collecting…', es: 'recogiendo…' },
+  temp: { en: 'temp', es: 'temp', 'zh-Hant': '溫度', 'zh-Hans': '温度' },
+  util: { en: 'load', es: 'carga', 'zh-Hant': '負載', 'zh-Hans': '负载' },
+  vram: { en: 'vram', es: 'vram', 'zh-Hant': 'vram', 'zh-Hans': 'vram' },
+  power: { en: 'power', es: 'potencia', 'zh-Hant': '功率', 'zh-Hans': '功率' },
+  fan: { en: 'fan', es: 'vent.', 'zh-Hant': '風扇', 'zh-Hans': '风扇' },
+  free: { en: 'free', es: 'libre', 'zh-Hant': '可用', 'zh-Hans': '可用' },
+  other: { en: 'other', es: 'otros', 'zh-Hant': '其他', 'zh-Hans': '其他' },
+  noProcs: { en: 'no processes', es: 'sin procesos', 'zh-Hant': '無處理程序', 'zh-Hans': '无进程' },
+  noData: { en: 'no GPU data (needs the gpu/devices source)', es: 'sin datos de GPU (necesita la fuente gpu/devices)', 'zh-Hant': '無 GPU 資料（需要 gpu/devices 資料來源）', 'zh-Hans': '无 GPU 数据（需要 gpu/devices 数据源）' },
+  unavailable: { en: 'no GPU: {reason}', es: 'sin GPU: {reason}', 'zh-Hant': '無 GPU：{reason}', 'zh-Hans': '无 GPU：{reason}' },
+  noMatch: { en: 'no GPU matches the filter', es: 'ninguna GPU coincide con el filtro', 'zh-Hant': '沒有符合篩選條件的 GPU', 'zh-Hans': '没有符合筛选条件的 GPU' },
+  last: { en: 'last {span}', es: 'últimos {span}', 'zh-Hant': '最近 {span}', 'zh-Hans': '最近 {span}' },
+  collecting: { en: 'collecting…', es: 'recogiendo…', 'zh-Hant': '收集中…', 'zh-Hans': '采集中…' },
 } satisfies Record<string, Localized>;
 
 const fill = (text: string, vars: Record<string, string | number>) => text.replace(/\{(\w+)\}/g, (_, k: string) => String(vars[k] ?? ''));
