@@ -14,7 +14,7 @@ const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v
 export const TEXT = {
   temp: { en: 'temp', es: 'temp', de: 'Temp', 'zh-Hant': '溫度', 'zh-Hans': '温度' },
   util: { en: 'load', es: 'carga', de: 'Last', 'zh-Hant': '負載', 'zh-Hans': '负载' },
-  vram: { en: 'vram', es: 'vram', de: 'VRAM', 'zh-Hant': 'vram', 'zh-Hans': 'vram' },
+  vram: { en: 'vram', es: 'vram', de: 'VRAM', 'zh-Hant': 'VRAM', 'zh-Hans': '显存' },
   power: { en: 'power', es: 'potencia', de: 'Leistung', 'zh-Hant': '功率', 'zh-Hans': '功率' },
   fan: { en: 'fan', es: 'vent.', de: 'Lüfter', 'zh-Hant': '風扇', 'zh-Hans': '风扇' },
   free: { en: 'free', es: 'libre', de: 'frei', 'zh-Hant': '可用', 'zh-Hans': '可用' },
