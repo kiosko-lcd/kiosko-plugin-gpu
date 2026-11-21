@@ -4,7 +4,7 @@
   "description": "GPU monitor for local AI boxes: temperature, load, VRAM by process and history, from nvidia-smi, rocm-smi, sysfs, Prometheus (DCGM) or over ssh.",
   "type": "module",
   "license": "MIT",
-  "author": "Loksly",
+  "author": "Loksly <info@kioskolcd.dev> (https://kioskolcd.dev)",
   "keywords": [
     "kiosko",
     "kiosko-plugin",
