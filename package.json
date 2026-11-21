@@ -1,6 +1,6 @@
 {
   "name": "kiosko-plugin-gpu",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "GPU monitor for local AI boxes: temperature, load, VRAM by process and history, from nvidia-smi, rocm-smi, sysfs, Prometheus (DCGM) or over ssh.",
   "type": "module",
   "license": "MIT",
