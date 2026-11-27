@@ -162,6 +162,13 @@ const gpusOf = ({ options, sources }: State) => filterGpus(snapshotOf(sources), 
 const urgent = (st: State) => anyAlert(gpusOf(st), st.options);
 // Dark when the GPUs rest: no load, no process holding memory, nothing in the red.
 const idle = (st: State) => !anyBusy(gpusOf(st), st.options);
+// Nothing to show (the tile passes the turn): the source answered, but with no
+// GPU (none found, no tool to read it) or none the `gpus` filter lets through.
+const empty = ({ options, sources }: State) => {
+  if (sources[DEVICES_SOURCE] === undefined) return false;
+  const s = filterGpus(snapshotOf(sources), options.gpus ?? '');
+  return !s?.available || !s.gpus.length;
+};
 const demo = ({ now }: { now: number }) => ({ sources: { [DEVICES_SOURCE]: demoSnapshot(now) } });
 
 export const cards = defineWidget({
@@ -185,6 +192,7 @@ export const cards = defineWidget({
   },
   urgent,
   idle,
+  empty,
   demo,
 });
 
@@ -209,6 +217,7 @@ export const vram = defineWidget({
   },
   urgent,
   idle,
+  empty,
   demo,
 });
 
@@ -233,13 +242,14 @@ export const historyWidget = defineWidget({
   },
   urgent,
   idle,
+  empty,
   demo,
 });
 
 export default definePlugin({
   id: 'gpu',
   name: { en: 'GPU', es: 'GPU', de: 'GPU', 'zh-Hant': 'GPU', 'zh-Hans': 'GPU' },
-  version: '0.2.2',
+  version: '0.2.4',
   languages: ['en', 'es', 'de', 'zh-Hant', 'zh-Hans'],
   sdk: '^0.2.0',
   permissions: { exec: ['nvidia-smi', 'rocm-smi', 'amd-smi', 'ssh'], files: ['/sys/class/drm'], network: ['user'] },

@@ -9,7 +9,7 @@
     "zh-Hant": "GPU",
     "zh-Hans": "GPU"
   },
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": {
     "en": "The GPUs of your AI box: temperature, load, VRAM by process and history. Local, over ssh or from a Prometheus exporter.",
     "es": "Las GPU de tu máquina de IA: temperatura, carga, VRAM por proceso e historial. En local, por ssh o desde un exporter de Prometheus.",
