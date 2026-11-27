@@ -49,6 +49,20 @@ test('urgent only past the red temperature; idle when the GPUs rest', () => {
   assert.equal(cards.urgent!(st({ available: false, reason: 'x', gpus: [], history: {}, at: 0 })), false);
 });
 
+test('empty: no GPU found, or none through the filter; never while loading', () => {
+  const calm: GpuSnapshot = { available: true, gpus: [{ index: 0, uuid: 'a', name: 'x', temp: 40, util: 0, processes: [] }], history: {}, at: 0 };
+  const st = (s: unknown, gpus: string[] = []) => ({ options: { ...T, gpus, maxProcesses: 4, historyMs: 1_800_000 }, data: undefined, sources: s === undefined ? {} : { [DEVICES_SOURCE]: s }, now: 0, working: true, workday: DEFAULT_WORKDAY });
+  for (const w of [cards, vram, historyWidget]) {
+    assert.equal(w.empty!(st(undefined)), false, `${w.id}: loading is not empty`);
+    assert.equal(w.empty!(st(calm)), false, `${w.id}: an idle GPU is worth seeing`);
+    assert.equal(w.empty!(st(demoSnapshot(0))), false, `${w.id}: real data`);
+    assert.equal(w.empty!(st({ available: false, reason: 'no nvidia-smi', gpus: [], history: {}, at: 0 })), true, `${w.id}: no GPU found`);
+    assert.equal(w.empty!(st({ available: true, gpus: [], history: {}, at: 0 })), true, `${w.id}: the devices source returns an empty list`);
+    assert.equal(w.empty!(st(calm, ['1'])), true, `${w.id}: the filter matches nothing`);
+    assert.equal(w.empty!(st({})), true, `${w.id}: an unreadable snapshot`);
+  }
+});
+
 test('history ring buffer: spaced samples, trimmed window, vanished GPUs dropped', () => {
   const h: Record<string, HistoryPoint[]> = {};
   const g = [{ index: 0, uuid: 'a', name: 'x', temp: 50, util: 10 }];
